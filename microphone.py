@@ -69,7 +69,7 @@ def get_microphone_input_for(seconds):
     for i in range(0, int(fs / chunk * seconds)):
         data = stream.read(chunk)
         frames.append(data)
-        if is_loud(data, 1000):
+        if is_loud(data, 2000):
             load = True
 
     # Stop and close the stream 
