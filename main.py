@@ -4,6 +4,7 @@ import curses
 from datetime import timedelta
 import microphone
 import re
+import numpy as np
 
 from difflib import SequenceMatcher
 
@@ -56,16 +57,17 @@ def main(stdscr):
         words2_str = ' '.join([' '.join(words2[j].split()) for j in sorted(words2.keys())])
         words2_str = replace_full_stops(words2_str)
 
-        if i in words and i in words2:
-            anchors[i] = longest_common_substring(words[i], words2[i])
+        for anchor_idx in range(max(len(words),len(words2))):
+            if anchor_idx not in anchors and (anchor_idx in words and anchor_idx in words2 and anchor_idx - 1 in words2):
+                anchors[anchor_idx] = longest_common_substring(words[anchor_idx], words2[anchor_idx])
 
         anchors_str = ' '.join([' '.join(anchors[j].split()) for j in sorted(anchors.keys())])
         anchors_str = replace_full_stops(anchors_str)
 
         stdscr.addstr(0, 0, f"Runtime: {run_time_str}")
-        stdscr.addstr(5, 0, f"Words: {words_str}")
-        stdscr.addstr(10, 0, f"Words2: {words2_str}")
-        # stdscr.addstr(15, 0, f"Anchors: {anchors_str}")
+        stdscr.addstr(10, 0, f"Words: {words_str}")
+        stdscr.addstr(20, 0, f"Words2: {words2_str}")
+        stdscr.addstr(30, 0, f"Intersections: {anchors_str}")
         time.sleep(0.2)
         stdscr.refresh()
 
