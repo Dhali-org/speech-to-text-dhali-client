@@ -4,6 +4,8 @@ import wave
 import pyaudio
 import requests
 
+import numpy as np
+
 from io import BytesIO                                                 
 from dhali.module import Module                                                    
 from dhali.payment_claim_generator import (                                        
@@ -38,6 +40,19 @@ sample_format = pyaudio.paInt16  # 16 bits per sample
 channels = 1
 fs = 16000  # Record at 44100 samples per second
 
+def is_loud(input_data, threshold):
+    # Convert byte data to numpy array
+    numpydata = np.fromstring(input_data, dtype=np.int16).astype( dtype=np.int32)
+    
+    # Calculate RMS (root mean square) which is a common way to measure "loudness"
+    rms = np.sqrt(np.mean(numpydata**2))
+    
+    # Check if the RMS is above the threshold
+    if rms > threshold:
+        return True
+    else:
+        return False
+
 def get_microphone_input_for(seconds):
 
     p = pyaudio.PyAudio()  # Create an interface to PortAudio
@@ -50,9 +65,12 @@ def get_microphone_input_for(seconds):
 
     # Store data in chunks for 3 seconds
     frames = []
+    load = False
     for i in range(0, int(fs / chunk * seconds)):
         data = stream.read(chunk)
         frames.append(data)
+        if is_loud(data, 1000):
+            load = True
 
     # Stop and close the stream 
     stream.stop_stream()
@@ -60,6 +78,9 @@ def get_microphone_input_for(seconds):
 
     # Terminate the PortAudio interface
     p.terminate()
+
+    if not load:
+        return "."
 
     buf = io.BytesIO()
 
@@ -81,7 +102,7 @@ def get_microphone_input_for(seconds):
 
 
     # return wf
-    # response = requests.post(api_url, files={'file': f})
+    # response = requests.post(api_url, files={'file': f}
     return response.json()["result"]
 
 if __name__ == "__main__":
