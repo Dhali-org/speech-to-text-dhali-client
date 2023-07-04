@@ -4,24 +4,18 @@ import curses
 from datetime import timedelta
 import microphone
 import re
-import numpy as np
-
-from difflib import SequenceMatcher
-
-def longest_common_substring(s1, s2):
-    match = SequenceMatcher(None, s1, s2).find_longest_match(0, len(s1), 0, len(s2))
-    return s1[match.a: match.a + match.size]
 
 class WordThread(threading.Thread):
-    def __init__(self, i, words, seconds):
+    def __init__(self, i, words, seconds, loud):
         threading.Thread.__init__(self)
         self.seconds = seconds
         self.i = i
         self.words = words
         self.start()
+        self.loud = loud
 
     def run(self):
-        words = microphone.get_microphone_input_for(seconds=self.seconds)
+        self.loud["is_loud"], words = microphone.get_microphone_input_for(seconds=self.seconds)
         self.words[self.i] = words
 
 def replace_full_stops(text):
@@ -37,14 +31,14 @@ def replace_full_stops(text):
     return text
 
 def main(stdscr):
-    seconds = 2.0
+    seconds = 3.5
+    overlap = 0.2
     # Clear screen
     stdscr.clear()
     start_time = time.time()
     time.sleep(0.1)
     words = {}
-    words2 = {}
-    anchors = {}
+    loud = {"is_loud": False}
 
     i = 0
     ii=0
@@ -54,30 +48,16 @@ def main(stdscr):
         words_str = ' '.join([' '.join(words[j].split()) for j in sorted(words.keys())])
         words_str = replace_full_stops(words_str)
 
-        words2_str = ' '.join([' '.join(words2[j].split()) for j in sorted(words2.keys())])
-        words2_str = replace_full_stops(words2_str)
-
-        for anchor_idx in range(max(len(words),len(words2))):
-            if anchor_idx not in anchors and (anchor_idx in words and anchor_idx in words2 and anchor_idx - 1 in words2):
-                anchors[anchor_idx] = longest_common_substring(words[anchor_idx], words2[anchor_idx])
-
-        anchors_str = ' '.join([' '.join(anchors[j].split()) for j in sorted(anchors.keys())])
-        anchors_str = replace_full_stops(anchors_str)
-
         stdscr.addstr(0, 0, f"Runtime: {run_time_str}")
-        stdscr.addstr(10, 0, f"Words: {words_str}")
-        stdscr.addstr(20, 0, f"Words2: {words2_str}")
-        stdscr.addstr(30, 0, f"Intersections: {anchors_str}")
+        stdscr.addstr(1, 0, f"Sound detected: {loud['is_loud']} ")
+        stdscr.addstr(3, 0, f"Words: {words_str}")
+        
         time.sleep(0.2)
         stdscr.refresh()
 
-        if run_time - seconds*i >= 0:
-            WordThread(i, words, seconds)
+        if run_time - (seconds - overlap)*i >= 0:
+            WordThread(i, words, seconds, loud)
             i += 1
-
-        if run_time - seconds*ii - seconds / 2 >= 0:
-            WordThread(ii, words2, seconds)
-            ii += 1
 
         time.sleep(0.2)
 

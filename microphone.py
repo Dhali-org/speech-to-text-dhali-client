@@ -5,25 +5,11 @@ import pyaudio
 import requests
 
 import numpy as np
-
-from io import BytesIO                                                 
-from dhali.module import Module                                                    
+                                                   
 from dhali.payment_claim_generator import (                                        
     get_xrpl_wallet,                                                               
     get_xrpl_payment_claim,                                                        
 )           
-
-# import logging
-
-# import http.client
-# http.client.HTTPConnection.debuglevel = 1
-
-# # You must initialize logging, otherwise you'll not see debug output.
-# logging.basicConfig()
-# logging.getLogger().setLevel(logging.DEBUG)
-# requests_log = logging.getLogger("requests.packages.urllib3")
-# requests_log.setLevel(logging.DEBUG)
-# requests_log.propagate = True
 
 print("Preparing payment infrastructure...")
 
@@ -65,12 +51,12 @@ def get_microphone_input_for(seconds):
 
     # Store data in chunks for 3 seconds
     frames = []
-    load = False
+    loud = False
     for i in range(0, int(fs / chunk * seconds)):
         data = stream.read(chunk)
         frames.append(data)
-        if is_loud(data, 2000):
-            load = True
+        if is_loud(data, 1500):
+            loud = True
 
     # Stop and close the stream 
     stream.stop_stream()
@@ -79,8 +65,8 @@ def get_microphone_input_for(seconds):
     # Terminate the PortAudio interface
     p.terminate()
 
-    if not load:
-        return "."
+    if not loud:
+        return loud, "."
 
     buf = io.BytesIO()
 
@@ -97,13 +83,7 @@ def get_microphone_input_for(seconds):
     files = {"input": buf}
     response = requests.put(f"https://dhali-prod-run-dauenf0n.uc.gateway.dev/{asset_uuid}/run", headers=headers, files=files)
 
-
-    # response = test_module.run(output, some_payment_claim)
-
-
-    # return wf
-    # response = requests.post(api_url, files={'file': f}
-    return response.json()["result"]
+    return loud, response.json()["result"]
 
 if __name__ == "__main__":
     print(get_microphone_input_for(3))
