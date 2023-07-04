@@ -9,10 +9,6 @@ import logging
 import numpy as np
 
 from dhali.module import Module
-from dhali.payment_claim_generator import (
-    get_xrpl_wallet,
-    get_xrpl_payment_claim,
-)
 
 LOGGING_FILE = "stderr.log"
 logging.basicConfig(filename=LOGGING_FILE)
@@ -21,18 +17,16 @@ print("Preparing payment infrastructure...")
 
 asset_uuid = "d82952124-c156-4b16-963c-9bc8b2509b2c"
 test_module = Module(asset_uuid)
-some_wallet = get_xrpl_wallet()
 
-DHALI_PUBLIC_ADDRESS="rstbSTpPcyxMsiXwkBxS9tFTrg2JsDNxWk"
-some_payment_claim = get_xrpl_payment_claim(some_wallet.seed, DHALI_PUBLIC_ADDRESS, "100000000", some_wallet.sequence, "200000000")
 
 class MicrophoneListener:
-    def __init__(self):
+    def __init__(self, payment_claim):
         # Settings
         self.chunk = 1024  # Record in chunks of 1024 samples
         self.sample_format = pyaudio.paInt16  # 16 bits per sample
         self.channels = 1
         self.fs = self.determine_sample_rate()
+        self.payment_claim = payment_claim
 
         # Determine the sample rate:
         for fs_test_value in (16000, 44100, 48000):
@@ -128,7 +122,7 @@ class MicrophoneListener:
 
         buf.seek(0)
 
-        response = test_module.run(buf, some_payment_claim)
+        response = test_module.run(buf, self.payment_claim)
 
         return loud, response.json()["result"]
 
