@@ -4,6 +4,10 @@ import curses
 from datetime import timedelta
 import microphone
 import re
+import logging
+
+LOGGING_FILE = "stderr.log"
+logging.basicConfig(filename=LOGGING_FILE)
 
 class WordThread(threading.Thread):
     def __init__(self, i, words, seconds, loud):
@@ -15,8 +19,11 @@ class WordThread(threading.Thread):
         self.loud = loud
 
     def run(self):
-        self.loud["is_loud"], words = microphone.get_microphone_input_for(seconds=self.seconds)
-        self.words[self.i] = words
+        try:
+            self.loud["is_loud"], words = microphone.get_microphone_input_for(seconds=self.seconds)
+            self.words[self.i] = words
+        except Exception as e:
+            logging.error(f"'WordThread.run': {e}")
 
 def replace_full_stops(text):
     # Find all occurrences of a full stop followed by zero or more spaces and a lowercase letter
@@ -31,37 +38,43 @@ def replace_full_stops(text):
     return text
 
 def main(stdscr):
-    seconds = 3.5
-    overlap = 0.2
-    # Clear screen
-    stdscr.clear()
-    start_time = time.time()
-    time.sleep(0.1)
-    words = {}
-    loud = {"is_loud": False}
+    try:
+        seconds = 3.5
+        overlap = 0.2
+        # Clear screen
+        stdscr.clear()
+        start_time = time.time()
+        time.sleep(0.1)
+        words = {}
+        loud = {"is_loud": False}
 
-    i = 0
-    ii=0
-    while True:
-        run_time = time.time() - start_time
-        run_time_str = str(timedelta(seconds=int(run_time)))
-        words_str = ' '.join([' '.join(words[j].split()) for j in sorted(words.keys())])
-        words_str = replace_full_stops(words_str)
+        i = 0
+        ii=0
+        while True:
+            run_time = time.time() - start_time
+            run_time_str = str(timedelta(seconds=int(run_time)))
+            words_str = ' '.join([' '.join(words[j].split()) for j in sorted(words.keys())])
+            words_str = replace_full_stops(words_str)
 
-        stdscr.addstr(0, 0, f"Runtime: {run_time_str}")
-        stdscr.addstr(1, 0, f"Sound detected: {loud['is_loud']} ")
-        stdscr.addstr(3, 0, f"Words: {words_str}")
-        
-        time.sleep(0.2)
-        stdscr.refresh()
+            stdscr.addstr(0, 0, f"Runtime: {run_time_str}")
+            stdscr.addstr(1, 0, f"Sound detected: {loud['is_loud']} ")
+            stdscr.addstr(3, 0, f"Words: {words_str}")
 
-        if run_time - (seconds - overlap)*i >= 0:
-            WordThread(i, words, seconds, loud)
-            i += 1
+            time.sleep(0.2)
+            stdscr.refresh()
 
-        time.sleep(0.2)
+            if run_time - (seconds - overlap)*i >= 0:
+                WordThread(i, words, seconds, loud)
+                i += 1
+
+            time.sleep(0.2)
+    except Exception as e:
+       logging.error(f"'main': {e}")
 
 
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    try:
+        curses.wrapper(main)
+    except Exception as e:
+       logging.error(f"'__main__': {e}")
