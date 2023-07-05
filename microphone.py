@@ -5,20 +5,20 @@ import pyaudio
 import requests
 
 import numpy as np
-                                           
-from dhali.module import Module                                                    
-from dhali.payment_claim_generator import (                                        
-    get_xrpl_wallet,                                                               
-    get_xrpl_payment_claim,                                                        
-)           
+
+from dhali.module import Module
+from dhali.payment_claim_generator import (
+    get_xrpl_wallet,
+    get_xrpl_payment_claim,
+)
 
 print("Preparing payment infrastructure...")
 
 asset_uuid = "d82952124-c156-4b16-963c-9bc8b2509b2c"
-test_module = Module(asset_uuid)                                       
-some_wallet = get_xrpl_wallet()                                                
-                                                                               
-DHALI_PUBLIC_ADDRESS="rstbSTpPcyxMsiXwkBxS9tFTrg2JsDNxWk"                      
+test_module = Module(asset_uuid)
+some_wallet = get_xrpl_wallet()
+
+DHALI_PUBLIC_ADDRESS="rstbSTpPcyxMsiXwkBxS9tFTrg2JsDNxWk"
 some_payment_claim = get_xrpl_payment_claim(some_wallet.seed, DHALI_PUBLIC_ADDRESS, "100000000", some_wallet.sequence, "200000000")
 
 # Settings
@@ -31,10 +31,10 @@ fs = 16000  # Record at 44100 samples per second
 def is_loud(input_data, threshold):
     # Convert byte data to numpy array
     numpydata = np.fromstring(input_data, dtype=np.int16).astype( dtype=np.int32)
-    
+
     # Calculate RMS (root mean square) which is a common way to measure "loudness"
     rms = np.sqrt(np.mean(numpydata**2))
-    
+
     # Check if the RMS is above the threshold
     if rms > threshold:
         return True
@@ -55,12 +55,12 @@ def get_microphone_input_for(seconds):
     frames = []
     loud = False
     for i in range(0, int(fs / chunk * seconds)):
-        data = stream.read(chunk)
+        data = stream.read(chunk, exception_on_overflow=False)
         frames.append(data)
         if is_loud(data, 1500):
             loud = True
 
-    # Stop and close the stream 
+    # Stop and close the stream
     stream.stop_stream()
     stream.close()
 
