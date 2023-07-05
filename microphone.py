@@ -5,7 +5,8 @@ import pyaudio
 import requests
 
 import numpy as np
-                                                   
+                                           
+from dhali.module import Module                                                    
 from dhali.payment_claim_generator import (                                        
     get_xrpl_wallet,                                                               
     get_xrpl_payment_claim,                                                        
@@ -13,7 +14,8 @@ from dhali.payment_claim_generator import (
 
 print("Preparing payment infrastructure...")
 
-asset_uuid = "d82952124-c156-4b16-963c-9bc8b2509b2c"                                        
+asset_uuid = "d82952124-c156-4b16-963c-9bc8b2509b2c"
+test_module = Module(asset_uuid)                                       
 some_wallet = get_xrpl_wallet()                                                
                                                                                
 DHALI_PUBLIC_ADDRESS="rstbSTpPcyxMsiXwkBxS9tFTrg2JsDNxWk"                      
@@ -79,9 +81,7 @@ def get_microphone_input_for(seconds):
 
     buf.seek(0)
 
-    headers = {"Payment-Claim": json.dumps(some_payment_claim)}
-    files = {"input": buf}
-    response = requests.put(f"https://dhali-prod-run-dauenf0n.uc.gateway.dev/{asset_uuid}/run", headers=headers, files=files)
+    response = test_module.run(buf, some_payment_claim)
 
     return loud, response.json()["result"]
 
