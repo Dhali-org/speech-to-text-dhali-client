@@ -5,22 +5,24 @@ from datetime import timedelta
 import microphone
 import re
 import logging
+import pyaudio
 
 LOGGING_FILE = "stderr.log"
 logging.basicConfig(filename=LOGGING_FILE)
 
 class WordThread(threading.Thread):
-    def __init__(self, i, words, seconds, loud):
+    def __init__(self, i, words, seconds, loud, listener):
         threading.Thread.__init__(self)
         self.seconds = seconds
         self.i = i
         self.words = words
-        self.start()
         self.loud = loud
+        self.listener = listener
+        self.start()
 
     def run(self):
         try:
-            self.loud["is_loud"], words = microphone.get_microphone_input_for(seconds=self.seconds)
+            self.loud["is_loud"], words = self.listener.get_microphone_input_for(seconds=self.seconds)
             self.words[self.i] = words
         except Exception as e:
             logging.error(f"'WordThread.run': {e}")
@@ -50,6 +52,8 @@ def main(stdscr):
 
         i = 0
         ii=0
+
+        listener = microphone.MicrophoneListener()
         while True:
             run_time = time.time() - start_time
             run_time_str = str(timedelta(seconds=int(run_time)))
@@ -64,7 +68,7 @@ def main(stdscr):
             stdscr.refresh()
 
             if run_time - (seconds - overlap)*i >= 0:
-                WordThread(i, words, seconds, loud)
+                WordThread(i, words, seconds, loud, listener)
                 i += 1
 
             time.sleep(0.2)
