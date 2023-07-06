@@ -113,10 +113,10 @@ def main(stdscr):
 
             stdscr.addstr(0, 0, f"Runtime: {run_time_str}")
             stdscr.addstr(1, 0, f"Sound detected: {loud['is_loud']} ")
-            stdscr.addstr(3, 0, f"Dhali balance: {dhali_balance[0]}")
+            stdscr.addstr(3, 0, f"Dhali balance: {float(dhali_balance[0])/1000000} XRP")
             stdscr.addstr(4, 0, f"Words: {words_str}")
 
-            time.sleep(overlap/2)
+            time.sleep(overlap/4)
             stdscr.refresh()
 
             if run_time - (seconds - overlap)*i >= 0:
