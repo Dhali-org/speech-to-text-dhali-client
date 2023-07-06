@@ -19,9 +19,6 @@ from dhali.payment_claim_generator import (
 LOGGING_FILE = "stderr.log"
 logging.basicConfig(filename=LOGGING_FILE)
 
-db = firestore.Client()
-
-db = firestore.Client()
 DHALI_PUBLIC_ADDRESS="rstbSTpPcyxMsiXwkBxS9tFTrg2JsDNxWk"
 TOTAL_DROPS_IN_CHANNEL= "200000000"
 
@@ -37,12 +34,28 @@ class BalanceThread(threading.Thread):
 
     def run(self):
         try:
-            claim_info_ref = db.collection("public_claim_info").document(self.payment_claim_id)
-            claim_info = claim_info_ref.get().to_dict()
-            to_claim = claim_info["to_claim"]
+            to_claim = self.get_public_claim_info(self.payment_claim_id)
             self.balance[0] = int(TOTAL_DROPS_IN_CHANNEL) - int(to_claim)
         except Exception as e:
             logging.error(f"'BalanceThread.run': {e}")
+
+    def get_public_claim_info(self, id):
+        try:
+            # Construct the URL to the document
+            url = f"https://firestore.googleapis.com/v1/projects/dhali-prod/databases/(default)/documents/public_claim_info/{id}"
+
+            # Send a GET request to the Firestore REST API
+            response = requests.get(url)
+            # Check the status code of the response
+            if response.status_code == 200:
+                # If it's 200, then the request was successful. Print the data of the document.
+                doc_data = json.loads(response.text)["fields"]["to_claim"]["doubleValue"]
+                return doc_data
+            else:
+                logging.error(f"Status code: {response.status_code}")
+        except Exception as e:
+            logging.error(f"BalanceThread.get_public_claim_info: {e}")
+
 
 class WordThread(threading.Thread):
     def __init__(self, i, words, seconds, loud, listener, dhali_balance):
