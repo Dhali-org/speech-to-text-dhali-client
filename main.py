@@ -100,7 +100,7 @@ def main(stdscr):
             stdscr.addstr(3, 0, f"Dhali balance: {dhali_balance[0]}")
             stdscr.addstr(4, 0, f"Words: {words_str}")
 
-            time.sleep(0.2)
+            time.sleep(overlap/2)
             stdscr.refresh()
 
             if run_time - (seconds - overlap)*i >= 0:
@@ -108,7 +108,6 @@ def main(stdscr):
                 BalanceThread(some_payment_claim, dhali_balance)
                 i += 1
 
-            time.sleep(0.2)
     except Exception as e:
        logging.error(f"'main': {e}")
 
