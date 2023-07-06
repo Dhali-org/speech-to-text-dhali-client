@@ -1,7 +1,10 @@
+import json
 import time
 import threading
 import curses
 from datetime import timedelta
+
+import requests
 import microphone
 import re
 import logging
@@ -69,7 +72,7 @@ class WordThread(threading.Thread):
 
     def run(self):
         try:
-            self.loud["is_loud"], words = self.listener.get_microphone_input_for(seconds=self.seconds)
+            words = self.listener.get_microphone_input_for(seconds=self.seconds, detect_is_loud = self.loud)
             self.words[self.i] = words
         except Exception as e:
             logging.error(f"'WordThread.run': {e}")

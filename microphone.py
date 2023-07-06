@@ -83,7 +83,7 @@ class MicrophoneListener:
             sys.exit(-1)
         return fs
 
-    def get_microphone_input_for(self, seconds):
+    def get_microphone_input_for(self, seconds, detect_is_loud):
 
         p = pyaudio.PyAudio()  # Initialize a temporary PyAudio instance
         stream = p.open(format=self.sample_format,
@@ -95,11 +95,12 @@ class MicrophoneListener:
         # Store data in chunks for 3 seconds
         frames = []
         loud = False
-        for i in range(0, int(self.fs / self.chunk * seconds)):
+        for _ in range(0, int(self.fs / self.chunk * seconds)):
             data = stream.read(self.chunk, exception_on_overflow=False)
             frames.append(data)
-            if self.is_loud(data, 1500):
+            if self.is_loud(data, 1000):
                 loud = True
+                detect_is_loud["is_loud"] = True
 
         # Stop and close the stream
         stream.stop_stream()
@@ -108,8 +109,10 @@ class MicrophoneListener:
         # Terminate the PortAudio interface
         p.terminate()
 
+        # Condition on `loud`, not `detect_is_loud` to ensure thread safety
         if not loud:
-            return loud, "."
+            detect_is_loud["is_loud"] = False
+            return "."
 
         buf = io.BytesIO()
 
@@ -124,7 +127,7 @@ class MicrophoneListener:
 
         response = test_module.run(buf, self.payment_claim)
 
-        return loud, response.json()["result"]
+        return response.json()["result"]
 
 if __name__ == "__main__":
     print(get_microphone_input_for(3))
