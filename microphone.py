@@ -13,7 +13,7 @@ from dhali.module import Module
 LOGGING_FILE = "stderr.log"
 logging.basicConfig(filename=LOGGING_FILE)
 
-print("Preparing payment infrastructure...")
+print("Preparing payment infrastructure. This may take a minute...")
 
 asset_uuid = "d82952124-c156-4b16-963c-9bc8b2509b2c"
 test_module = Module(asset_uuid)

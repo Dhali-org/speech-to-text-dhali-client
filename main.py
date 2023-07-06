@@ -1,3 +1,4 @@
+import io
 import json
 import time
 import threading
@@ -27,6 +28,10 @@ TOTAL_DROPS_IN_CHANNEL= "200000000"
 
 some_wallet = get_xrpl_wallet()
 some_payment_claim = get_xrpl_payment_claim(some_wallet.seed, DHALI_PUBLIC_ADDRESS, "100000000", some_wallet.sequence, TOTAL_DROPS_IN_CHANNEL)
+
+# Warm up the module
+buf = io.BytesIO()
+microphone.test_module.run(buf, some_payment_claim)
 
 class BalanceThread(threading.Thread):
     def __init__(self, payment_claim, balance):
