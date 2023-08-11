@@ -96,14 +96,13 @@ def replace_full_stops(text):
 
 def main(stdscr):
     try:
-        seconds = 3.5
-        overlap = 0.2
+        seconds = 3
         # Clear screen
         stdscr.clear()
         start_time = time.time()
         time.sleep(0.1)
         words = {}
-        loud = {"is_loud": False}
+        loud_or_recording = {"is_loud": False, "is_recording": False}
         dhali_balance=[0]  # make it a list so it can be updated in the thread
 
         i = 0
@@ -116,16 +115,14 @@ def main(stdscr):
             words_str = ' '.join([' '.join(words[j].split()) for j in sorted(words.keys())])
             words_str = replace_full_stops(words_str)
 
-            stdscr.addstr(0, 0, f"Runtime: {run_time_str}")
-            stdscr.addstr(1, 0, f"Sound detected: {loud['is_loud']} ")
-            stdscr.addstr(3, 0, f"Dhali balance: {float(dhali_balance[0])/1000000} XRP")
-            stdscr.addstr(4, 0, f"Words: {words_str}")
+            stdscr.addstr(1, 0, f"Spent: {round(float(TOTAL_DROPS_IN_CHANNEL)/1000000 - float(dhali_balance[0])/1000000, 4)} XRP")
+            stdscr.addstr(3, 0, f"Words: {words_str}")
 
-            time.sleep(overlap/4)
+            time.sleep(0.05)
             stdscr.refresh()
 
-            if run_time - (seconds - overlap)*i >= 0:
-                WordThread(i, words, seconds, loud, listener, dhali_balance)
+            if not loud_or_recording["is_recording"]:
+                WordThread(i, words, seconds, loud_or_recording, listener, dhali_balance)
                 BalanceThread(some_payment_claim, dhali_balance)
                 i += 1
 

@@ -84,7 +84,7 @@ class MicrophoneListener:
         return fs
 
     def get_microphone_input_for(self, seconds, detect_is_loud):
-
+        detect_is_loud["is_recording"] = True 
         p = pyaudio.PyAudio()  # Initialize a temporary PyAudio instance
         stream = p.open(format=self.sample_format,
                         channels=self.channels,
@@ -95,13 +95,24 @@ class MicrophoneListener:
         # Store data in chunks for 3 seconds
         frames = []
         loud = False
-        for _ in range(0, int(self.fs / self.chunk * seconds)):
+        count = 0
+        previous_frame_is_loud = False
+        current_frame_is_loud = False
+        while True:
+            count += 1
             data = stream.read(self.chunk, exception_on_overflow=False)
             frames.append(data)
-            if self.is_loud(data, 1000):
+            previous_frame_is_loud = current_frame_is_loud
+            current_frame_is_loud = self.is_loud(data, 500)
+
+            if self.is_loud(data, 500):
                 loud = True
                 detect_is_loud["is_loud"] = True
-
+            if count > int(self.fs / self.chunk * seconds) and not current_frame_is_loud and not previous_frame_is_loud:
+                break
+            if count > int(self.fs / self.chunk * (seconds+4)):
+                break
+        detect_is_loud["is_recording"] = False        
         # Stop and close the stream
         stream.stop_stream()
         stream.close()
